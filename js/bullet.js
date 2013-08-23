@@ -3,6 +3,11 @@
 		for(pros in opt){
 			this[pros] = opt[pros];
 		}
+		if (this.isEnemy) {
+			this.color = 'black';
+		} else {
+			this.color = 'red';
+		}
 		this.allTime = 0;
 	}
 
@@ -33,6 +38,7 @@
 
 		},
 		draw: function(cxt){
+			cxt.fillStyle = this.color;
 			switch (this.direction) {
 				case 'up':
 					cxt.fillRect(this.x-2,this.y-2-20,4,4);
