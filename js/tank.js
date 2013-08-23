@@ -12,7 +12,8 @@
 			this.color = 'red';
 		}
 		this.allDistance = 0;
-		this.allTime = 0;
+		this.updateTime = 0;
+		this.lastShootTime = 0;
 		this.bulletCount = 0;
 	}
 
@@ -31,8 +32,8 @@
 				return;
 			}
 
-			this.allTime += time;
-			var diff = Math.floor(this.speed * this.allTime / 1000);
+			this.updateTime += time;
+			var diff = Math.floor(this.speed * this.updateTime / 1000);
 			if (diff) {
 				switch (this.direction) {
 					case 'up':
@@ -68,7 +69,7 @@
 
 				this.allDistance += diff;
 
-				this.allTime = 0;
+				this.updateTime = 0;
 			}
 
 			if (this.allDistance > w.canvas.width / 3) {
