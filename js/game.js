@@ -2,7 +2,7 @@ var canvas = document.getElementById('canvas');
 (function(w) {
 
 	var cxt = canvas.getContext('2d'),
-		sleep = Math.floor(1000 / 30),
+		sleep = Math.floor(1000 / 10),
 		keys = {},
 		key = {
 			left: 37,
@@ -11,12 +11,12 @@ var canvas = document.getElementById('canvas');
 			down: 40,
 			shoot: 65
 		},
+		gameover = false,
 		tanks = [],
 		bullets = [],
+		friendTank = {},
 		totalTank = 20,
-		liveTank = 3;
-
-
+		liveTank = 0;
 
 	var game = {
 
@@ -25,8 +25,9 @@ var canvas = document.getElementById('canvas');
 				direction: 'up',
 				speed: 100,
 				isEnemy: false,
-				x: 200,
-				y: 400
+				x: 300,
+				y: 400,
+				id: game.id
 			}));
 			for (var i = 1; i <= 3; i++) {
 				addEnemy(i);
@@ -36,17 +37,19 @@ var canvas = document.getElementById('canvas');
 
 		},
 		start: function() {
-			var gameover = false;
-
 			function run() {
 				if (liveTank === 0) {
-					if(totalTank === 0){
-						alert('恭喜你');
+					if (totalTank === 0) {
+						//alert('恭喜你');
 						gameover = true;
-						return;
-					}else{
+						//return;
+					} else {
 						addEnemy(2);
 					}
+				}
+
+				if(friendTank.die && tanks[0].isEnemy ){
+					gameover = true;
 				}
 
 				updateUI();
@@ -54,13 +57,11 @@ var canvas = document.getElementById('canvas');
 				game.clear();
 				var now = new Date().getTime();
 
-
-
 				tanks.forEach(function(tank, index) {
 
 					//子弹和坦克的碰撞检测
 					bullets.forEach(function(b) {
-						if (!b.getDie()) {
+						if (!Bullet.prototype.getDie.call(b)) {
 							if ((b.isEnemy && !tank.isEnemy) || (tank.isEnemy && !b.isEnemy)) {
 								if (game.collideDetect({
 									x: b.x,
@@ -75,7 +76,7 @@ var canvas = document.getElementById('canvas');
 									tank.die = true;
 									totalTank--;
 									liveTank--;
-									setTimeout(addEnemy,5000);
+									setTimeout(addEnemy, 5000);
 
 								}
 							}
@@ -83,11 +84,11 @@ var canvas = document.getElementById('canvas');
 					});
 
 
-					if (index === 0) {
+					if (tank.id === game.id) {
 
 						//主坦克
 						tanks.forEach(function(t, index) {
-							if (index === 0) {
+							if (t.id) {
 								return;
 							}
 							if (game.collideDetect({
@@ -106,11 +107,11 @@ var canvas = document.getElementById('canvas');
 							}
 						});
 
-						if (tank.die) {
-							gameover = true;
-							alert('game over !!!!');
-							return false;
-						}
+						// if (tank.die) {
+						// 	gameover = --;
+						// 	alert('game over !!!!');
+						// 	return;
+						// }
 						tank.setCanMove(false);
 						for (pro in key) {
 
@@ -143,22 +144,37 @@ var canvas = document.getElementById('canvas');
 
 					} else {
 						tank.update(sleep);
+
 						tank.draw(cxt);
 					}
 				});
 
+				if (friendTank && !friendTank.die) {
+					Tank.prototype.draw.call(friendTank, cxt);
+				}
+
 
 
 				bullets.forEach(function(bullet, index) {
-					if (bullet.getDie()) {
+					if (Bullet.prototype.getDie.call(bullet)) {
+
+						if (!bullet.isEnemy) {
+
+							if (bullet.getDie) {
+								tanks[0].bulletCount--;
+							} else {
+								friendTank.bulletCount--;
+							}
+
+						}
 						bullets.splice(index, 1);
-						tanks[0].bulletCount--;
 						return;
 					}
-					bullet.update(sleep);
-					bullet.draw(cxt);
+					Bullet.prototype.update.call(bullet, sleep);
+					Bullet.prototype.draw.call(bullet, cxt);
 				});
 
+				sendData();
 				if (!gameover) {
 					setTimeout(run, sleep)
 				}
@@ -186,8 +202,16 @@ var canvas = document.getElementById('canvas');
 		},
 		collideDetect: function(c1, c2) {
 			return c1.r + c2.r >= Math.sqrt((c1.x - c2.x) * (c1.x - c2.x) + (c1.y - c2.y) * (c1.y - c2.y));
+		},
+		updateData: function(data) {
+			var count = friendTank.direction ? friendTank.bulletCount : 0;
+			friendTank = data.tank;
+			friendTank.bulletCount = count;
+			if (data.bullets && count < 3) {
+				bullets.push(data.bullets);
+				friendTank.bulletCount++;
+			}
 		}
-
 	};
 
 	function addBullet(tank) {
@@ -197,18 +221,19 @@ var canvas = document.getElementById('canvas');
 			speed: 200,
 			isEnemy: tank.isEnemy,
 			x: tank.x,
-			y: tank.y
+			y: tank.y,
+			color: tank.color
 		}));
 	}
 
 	function addEnemy(i) {
 		var i = i || Math.round(Math.random() * 2 + 1);
-		if(totalTank-liveTank>0){
+		if (totalTank - liveTank > 0) {
 			tanks.push(new Tank({
 				direction: 'down',
 				speed: 100,
 				isEnemy: true,
-				x: 30 + (i-1) * 180,
+				x: 30 + (i - 1) * 180,
 				y: 20
 			}));
 			liveTank++;
@@ -219,12 +244,23 @@ var canvas = document.getElementById('canvas');
 		document.getElementById('totalTank').innerHTML = totalTank;
 	}
 
+	function sendData(tank) {
+
+		var data = {
+			id: game.id,
+			totalTank: totalTank,
+			tanks: tanks,
+			bullets: bullets,
+			friendTankBullets: friendTank.direction ? friendTank.bulletCount : 0,
+			gameover : gameover
+		}
+
+		websocket.send(JSON.stringify(data));
+	}
+
 
 	w.game = game;
 
 
 
 })(window)
-
-game.init();
-game.start();
