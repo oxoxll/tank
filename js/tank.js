@@ -9,7 +9,7 @@
 			this.color = 'black';
 		} else {
 			this.canMove = false;
-			this.color = 'red';
+			this.color = (['red','purple','yellow','green','blue'])[Math.round(Math.random() * 4)];
 		}
 		this.allDistance = 0;
 		this.updateTime = 0;
