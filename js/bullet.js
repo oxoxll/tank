@@ -3,11 +3,7 @@
 		for(pros in opt){
 			this[pros] = opt[pros];
 		}
-		if (this.isEnemy) {
-			this.color = 'black';
-		} else {
-			this.color = 'red';
-		}
+		
 		this.allTime = 0;
 	}
 
