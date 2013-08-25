@@ -36,7 +36,7 @@ server.listen(8765, function() {
     console.log((new Date()) + ' Server is listening on port 8765');
 });
 
-wsServer = new WebSocketServer({
+var wsServer = new WebSocketServer({
     httpServer: server,
     autoAcceptConnections: false
 });
