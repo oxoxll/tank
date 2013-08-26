@@ -20,7 +20,7 @@
 				gameClient.start();
 			}
 		}else{
-			if(game.id){
+			if(game.id === 2){
 				game.updateData(data);
 			}else{
 				gameClient.updateData(data);	
